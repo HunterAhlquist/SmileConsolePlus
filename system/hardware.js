@@ -1,5 +1,7 @@
 class SuperVGA {
-    canvas;
+    pause;
+
+    canvasArea;
 
     refreshRate;
     resolution;
@@ -12,9 +14,12 @@ class SuperVGA {
     render;
 
     constructor(canvas, sizeX, sizeY) {
+        this.pause = false;
+
+        this.canvasArea = canvas;
         this.resolution = {
-            x: 128,
-            y: 128
+            x: 64,
+            y: 64
         }
         this.refreshRate = 60;
         this.canvas = canvas;
@@ -34,18 +39,29 @@ class SuperVGA {
             let x = Math.floor(this.thread.x / sizeX);
             let y = Math.floor(this.thread.y / sizeY);
             this.color(buffer[x][y][0], buffer[x][y][1], buffer[x][y][2], 1);
-        }).setOutput([1000, 1000]).setGraphical(true);
+        }).setOutput([sizeX, sizeY]).setGraphical(true);
 
         setInterval(function() {
+            if (vga.pause) return;
             vga.render(vga.framebuffer, vga.pixelSizeX, vga.pixelSizeY);
-            document.getElementsByTagName("body")[0].appendChild(vga.render.canvas);
+            vga.canvas.appendChild(vga.render.canvas);
         }, 1000 / this.refreshRate);
     }
 }
 
-let vga = new SuperVGA(document.getElementById("monitor"), 1000, 1000);
+class CPU {
+    cache;
+    pause;
 
+    constructor(os) {
+        this.cache = os;
+        setInterval(this.execute);
+        this.pause = false;
+    }
 
-
-
+    execute() {
+        if (cpu.pause) return;
+        cpu.cache.activeApp.update();
+    }
+}
 

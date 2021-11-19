@@ -1,0 +1,22 @@
+.screen > canvas {
+    image-rendering: optimizeSpeed;             /* Older versions of FF          */
+    image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
+    image-rendering: -webkit-optimize-contrast; /* Safari                        */
+    image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+    image-rendering: pixelated;                 /* Awesome future-browsers       */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+    outline: white solid 4px;
+    -webkit-box-shadow: 0 0 70px 20px rgba(255,255,255,0.2);
+    box-shadow: 0 0 70px 20px rgba(255,255,255,0.2);
+}
+.screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+html {
+    height: 100%;
+    display: grid;
+    background-color: black;
+}
