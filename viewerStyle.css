@@ -1,3 +1,11 @@
+@font-face {
+    font-family: 'c64';
+    src: url('c64-webfont.woff2') format('woff2'),
+    url('c64-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .screen > canvas {
     image-rendering: optimizeSpeed;             /* Older versions of FF          */
     image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
@@ -6,18 +14,22 @@
     image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
     image-rendering: pixelated;                 /* Awesome future-browsers       */
     -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+
+
     outline: white solid 4px;
     -webkit-box-shadow: 0 0 70px 20px rgba(255,255,255,0.2);
     box-shadow: 0 0 70px 20px rgba(255,255,255,0.2);
 }
 .screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
+    position: absolute;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%)
 }
 html {
-    height: 100%;
-    display: grid;
     background-color: black;
+    font-family: c64, serif;
+}
+body {
+
 }

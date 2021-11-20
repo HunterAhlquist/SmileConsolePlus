@@ -1,4 +1,4 @@
-const vga = new SuperVGA(document.getElementById("monitor"), 500, 500);
+const vga = new SuperVGA(document.getElementById("color"), window.innerHeight * 0.9, window.innerHeight * 0.9);
 const system = new SmileOS();
 const cpu = new CPU(system);
 
