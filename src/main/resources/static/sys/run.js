@@ -1,13 +1,10 @@
-const vga = new SuperVGA(document.getElementById("color"), window.innerHeight * 0.9, window.innerHeight * 0.9);
-const system = new SmileOS();
-const cpu = new CPU(system);
+system.switchApp(system.apps.get("term"));
 
 document.addEventListener('visibilitychange', function() {
     if(document.hidden) {
         cpu.pause = true;
         vga.pause = true;
-    }
-    else {
+    } else {
         cpu.pause = false;
         vga.pause = false;
     }

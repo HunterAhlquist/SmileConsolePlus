@@ -1,33 +1,39 @@
 class SuperVGA {
+    static currentVGA;
     pause;
 
-    colorDisplayArea;
-    colorDisplay;
-
+    //text layer
     textLayer;
     textLayerContext;
     fontSize;
     textAreaSize;
     fontHeight;
+    charGridMode;
 
-    refreshRate;
-    resolution;
-    framebuffer;
-
+    //image layer
+    colorDisplayArea;
+    colorDisplay;
     pixelSizeX;
     pixelSizeY;
 
+    //parameters
+    refreshRate;
+    resolution;
+
+    //output
+    framebuffer;
     gpu;
-    render;
+    rasterizer;
     blank;
 
     constructor(canvas, sizeX, sizeY) {
+        SuperVGA.currentVGA = this;
         this.pause = false;
 
         this.colorDisplayArea = canvas;
         this.resolution = {
-            x: 128,
-            y: 128
+            x: HardwareSettings.resX,
+            y: HardwareSettings.resY
         }
         this.textAreaSize = {width: this.resolution.x, height: this.resolution.y};
         this.refreshRate = 60;
@@ -48,19 +54,21 @@ class SuperVGA {
             return [0, 0, 0, 1];
         }).setOutput([this.resolution.x, this.resolution.y]);
 
-        //create renderer kernel
-        this.render = this.gpu.createKernel(function (buffer, sizeX, sizeY) {
+        //create rasterizer kernel
+        this.rasterizer = this.gpu.createKernel(function (buffer, sizeX, sizeY) {
             let x = Math.floor(this.thread.x / sizeX);
             let y = Math.floor(this.thread.y / sizeY);
             this.color(buffer[x][y][0], buffer[x][y][1], buffer[x][y][2], buffer[x][y][3]);
         }).setOutput([sizeX, sizeY]).setGraphical(true);
 
-        this.render(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
-        this.colorDisplay = this.render.canvas;
+        //create image canvas
+        this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
+        this.colorDisplay = this.rasterizer.canvas;
         this.colorDisplayArea.appendChild(this.colorDisplay);
 
         //create text overlay canvas
-        document.getElementById("text").innerHTML = "<canvas id='textCanvas' width='" + sizeX + "' height='" + sizeY + "'>";
+        document.getElementById("text").innerHTML =
+            "<canvas id='textCanvas' width='" + sizeX + "' height='" + sizeY + "'>";
         this.textLayer = document.getElementById("textCanvas");
         this.textLayerContext = this.textLayer.getContext('2d');
         this.textLayerContext.fillStyle = "rgb(255,255,255)";
@@ -71,21 +79,41 @@ class SuperVGA {
             if (this.pause) return;
             this.framebuffer = this.blank();
             this.textLayerContext.clearRect(0, 0, this.textLayer.width, this.textLayer.height);
-            cpu.os.activeApp.render();
-            this.render(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
+            this.framebuffer = cpu.os.render(this.framebuffer);
+            this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
             this.textLayerContext.font = this.fontSize * this.pixelSizeX + "px c64";
             this.fontHeight = this.fontSize * this.pixelSizeY;
-
-
         }.bind(this), 1000 / this.refreshRate);
     }
 
+    RenderCharGrid(chars) {
 
+    }
+
+    getLines(ctx, text, maxWidth) {
+        let words = text.split(" ");
+        let lines = [];
+        let currentLine = words[0];
+
+        for (let i = 1; i < words.length; i++) {
+            let word = words[i];
+            let width = ctx.measureText(currentLine + " " + word).width;
+            if (width < maxWidth) {
+                currentLine += " " + word;
+            } else {
+                lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        lines.push(currentLine);
+        return lines;
+    }
 }
 
 class CPU {
     os;
     pause;
+    static deltaTime;
 
     constructor(os) {
         this.os = os;
@@ -95,7 +123,9 @@ class CPU {
 
     execute() {
         if (this.pause) return;
-        this.os.activeApp.update();
+        let preTime = Date.now();
+        this.os.update();
+        CPU.deltaTime = Date.now() - preTime;
     }
 }
 
