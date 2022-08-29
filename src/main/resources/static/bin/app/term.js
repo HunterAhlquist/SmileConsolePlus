@@ -4,6 +4,9 @@ class Term extends App {
     consoleRect;
     inputRect;
     inputBuffer = "";
+    charLimit = 25;
+
+    inputEvent;
 
     /**
      * Start fires on the first run of an app
@@ -29,7 +32,8 @@ class Term extends App {
         vga.textBuffer.get(this).push(this.inputRect);
 
         //input
-        document.addEventListener('keydown', (evt) => this.input(evt));
+        this.inputEvent = this.input.bind(this);
+        document.addEventListener('keydown', this.inputEvent);
     }
 
     /**
@@ -53,7 +57,7 @@ class Term extends App {
      * Disable any bound input here.
      */
     sleep() {
-        document.removeEventListener('keydown', (evt) => this.input(evt));
+        document.removeEventListener('keydown', this.inputEvent);
     }
 
     /**
@@ -61,26 +65,39 @@ class Term extends App {
      * Re-enable any bound input here.
      */
     wake() {
-        document.addEventListener('keydown', (evt) => this.input(evt));
+        document.addEventListener('keydown', this.inputEvent);
     }
 
     executeInput(input) {
-        this.consoleRect.text += input + "\r\n";
+        let splitCommand = this.inputBuffer.match(/(?:[^\s"']+|['"][^'"]*["'])+/g);
+        let command = splitCommand.shift();
+        if (system.apps.has(command)) {
+            let app = system.apps.get(command);
+            if (!app.processParam(splitCommand)) {
+                this.consoleRect.text += input + ": incorrect parameters for command" + "\r\n";
+                return;
+            }
+            system.switchApp(app);
+            //this.consoleRect.text += input + "\r\n";
+            return;
+        }
+
+        this.consoleRect.text += input + ": command not recognized" + "\r\n";
     }
 
-    input(evt) {
-        let char = evt.key
+    input(event) {
+        let char = event.key
         if (char === "Backspace" &&
             this.inputBuffer.length > 0) {
             this.inputBuffer = this.inputBuffer.substring(0, this.inputBuffer.length-1);
             return;
         }
-        if (char === "Enter") {
+        if (char === "Enter" && this.inputBuffer.length > 0) {
             this.executeInput(this.inputBuffer);
             this.inputBuffer = "";
             return;
         }
-        if (char.length === 1) {
+        if (char.length === 1 && this.inputBuffer.length < this.charLimit) {
             this.inputBuffer += char;
         }
     }

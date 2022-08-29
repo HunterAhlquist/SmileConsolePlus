@@ -16,8 +16,8 @@ class Netconf extends App {
     /**
      * The render function is where you apply any shaders to the frame buffer object
      */
-    render() {
-
+    render(buffer) {
+        return GFX.noiseShader();
     }
 
     /**

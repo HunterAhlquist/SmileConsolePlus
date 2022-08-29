@@ -3,33 +3,47 @@ class SmileOS {
     version = "2.0";
     demons; //map <string, demon>
     apps; //map <string, app>
-    activeApp;
+    shellApp; //app
+    activeApp; //app
 
     constructor() {
         SmileOS.currentOS = this;
         this.apps = new Map();
         this.demons = new Map();
         window.addEventListener("load", () => {
-            this.switchApp(this.apps.get("term"));
+            this.shellApp = this.apps.get("term");
+            this.switchApp(this.shellApp);
+            this.runDemon("shellman");
         })
     }
 
+    goHome() {
+        this.switchApp(this.shellApp);
+    }
+
     update() {
-        if (this.activeApp != null) this.activeApp.update();
         for (let demon of this.demons.values()) {
             demon.update();
         }
+        if (this.activeApp != null) this.activeApp.update();
     }
 
     render(buffer) {
-        if (this.activeApp != null) return this.activeApp.render(buffer);
+        if (this.activeApp != null) {
+            let newBuffer = this.activeApp.render(buffer);
+            if (newBuffer === undefined) {
+                return buffer;
+            } else {
+                return newBuffer;
+            }
+
+        }
         else return buffer;
     }
 
     switchApp(app) {
-        if (this.activeApp != null) {
+        if (this.activeApp != null && this.activeApp.firstRun) {
             this.activeApp.sleep();
-            //this.apps
         }
         this.activeApp = app;
         if (app.firstRun === true) {
@@ -41,11 +55,24 @@ class SmileOS {
         }
     }
 
-    runDemon() {
-
+    runDemon(name) {
+        if (this.demons.has(name)) {
+            let demon = this.demons.get(name);
+            if (demon.active === false) { //first run
+                demon.start();
+                demon.active = true;
+            }
+        }
     }
-    stopDemon() {
 
+    stopDemon(name) {
+        if (this.demons.has(name)) {
+            let demon = this.demons.get(name);
+            if (demon.active === true) {
+                demon.end();
+                demon.active = false;
+            }
+        }
     }
 }
 
@@ -53,17 +80,23 @@ class SmileOS {
  * Background process, only one instance of the process can exist
  */
 class Demon {
+    active = false;
 
     start() {
-
+        console.warn("Default start, please override all methods for demons.");
     }
 
     update() {
-
+        console.warn("Default update, please override all methods for demons.");
     }
 
     end() {
+        console.warn("Default end, please override all methods for demons.");
+    }
 
+    processParam(params) {
+        console.warn("Default processParam, please override all methods for demons.");
+        return true;
     }
 }
 
@@ -77,21 +110,22 @@ class App {
      * Start fires on the first run of an app
      */
     start() {
-
+        console.warn("Default start, please override all methods for apps.");
     }
 
     /**
      * Update fires every "cpu cycle"
      */
     update() {
-
+        console.warn("Default update, please override all methods for apps.");
     }
 
     /**
      * The render function is where you apply any shaders to the frame buffer object
      */
     render(buffer) {
-
+        console.warn("Default render, please override all methods for apps.");
+        return buffer;
     }
 
     /**
@@ -99,7 +133,7 @@ class App {
      * Disable any bound input here.
      */
     sleep() {
-
+        console.warn("Default sleep, please override all methods for apps.");
     }
 
     /**
@@ -107,6 +141,11 @@ class App {
      * Re-enable any bound input here.
      */
     wake() {
+        console.warn("Default wake, please override all methods for apps.");
+    }
 
+    processParam(params) {
+        console.warn("Default processParam, please override all methods for apps.");
+        return true;
     }
 }
