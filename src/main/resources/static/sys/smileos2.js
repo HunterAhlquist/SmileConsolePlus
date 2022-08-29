@@ -1,27 +1,39 @@
 class SmileOS {
     static currentOS; //singleton in js, damn that's ridiculous.
-
     version = "2.0";
-    apps;
-    activeApp; //map <string, app>
+    demons; //map <string, demon>
+    apps; //map <string, app>
+    activeApp;
 
     constructor() {
         SmileOS.currentOS = this;
         this.apps = new Map();
+        this.demons = new Map();
+        window.addEventListener("load", () => {
+            this.switchApp(this.apps.get("term"));
+        })
     }
 
     update() {
         if (this.activeApp != null) this.activeApp.update();
+        for (let demon of this.demons.values()) {
+            demon.update();
+        }
     }
 
     render(buffer) {
         if (this.activeApp != null) return this.activeApp.render(buffer);
+        else return buffer;
     }
 
     switchApp(app) {
-        if (this.activeApp != null) this.activeApp.sleep();
+        if (this.activeApp != null) {
+            this.activeApp.sleep();
+            //this.apps
+        }
         this.activeApp = app;
         if (app.firstRun === true) {
+            vga.textBuffer.set(app, []);
             this.activeApp.start();
             this.activeApp.firstRun = false;
         } else {
@@ -29,9 +41,35 @@ class SmileOS {
         }
     }
 
+    runDemon() {
 
+    }
+    stopDemon() {
+
+    }
 }
 
+/**
+ * Background process, only one instance of the process can exist
+ */
+class Demon {
+
+    start() {
+
+    }
+
+    update() {
+
+    }
+
+    end() {
+
+    }
+}
+
+/**
+ * Foreground process, only one instance of the process can exist
+ */
 class App {
     firstRun = true;
 
@@ -72,4 +110,3 @@ class App {
 
     }
 }
-

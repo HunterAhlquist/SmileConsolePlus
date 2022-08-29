@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <title>SmileOS Plus</title>
     <link rel="stylesheet" th:href="@{/viewerStyle.css}">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicons/normal.png}">
 </head>
 <body>
-test
 <div class="screen" id="color"></div>
 <div class="screen" id="text"></div>
 </body>
 <!-- Base -->
 <script th:src="@{/lib/gpu-browser.min.js}"></script>
+<script th:src="@{/lib/canvas-txt.js}"></script>
 <script th:src="@{/sys/hardware.js}"></script>
 <script th:src="@{/sys/smileos2.js}"></script>
 <script th:src="@{/sys/boot.js}"></script>
@@ -19,9 +20,9 @@ test
 <script th:src="@{/lib/gfx.js}"></script>
 <script th:src="@{/lib/input.js}"></script>
 <!-- Demons -->
-
+<script th:each="demon : ${demons}" th:src="'/bin/demon/' + ${demon}"></script>
 <!-- Apps -->
-<script th:each="app : ${apps}" th:src="'/bin/' + ${app} + '.js'"></script>
+<script th:each="app : ${apps}" th:src="'/bin/app/' + ${app}"></script>
 <!-- Start -->
 <script th:src="@{/sys/run.js}"></script>
 

@@ -1,4 +1,4 @@
-system.switchApp(system.apps.get("term"));
+//system.switchApp(system.apps.get("term"));
 
 document.addEventListener('visibilitychange', function() {
     if(document.hidden) {

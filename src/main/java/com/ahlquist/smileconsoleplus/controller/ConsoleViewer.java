@@ -14,8 +14,9 @@ public class ConsoleViewer {
     }
 
     @GetMapping("/")
-    public String GetConsoleViewer(Model model) {
+    public String GetConsoleViewer(Model model){
         model.addAttribute("apps", appMan.returnAvailableApps());
+        model.addAttribute("demons", appMan.returnAvailableDemons());
         return "Viewer";
     }
 }

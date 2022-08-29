@@ -1,6 +1,6 @@
 class GFX {
 
-    static noiseShader = vga.gpu.createKernel(function(buffer) {
+    static noiseShader = vga.gpu.createKernel(function() {
         let random = Math.min(Math.random(), 0.05);
         return [random, random, random, 1];
     }).setOutput([vga.resolution.x, vga.resolution.y]);
@@ -16,6 +16,5 @@ class GFX {
         }
         return [buffer[x][y][0], buffer[x][y][1], buffer[x][y][2], buffer[x][y][3]];
     }).setOutput([vga.resolution.x, vga.resolution.y]);
-
 
 }

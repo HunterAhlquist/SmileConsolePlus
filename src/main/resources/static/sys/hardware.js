@@ -1,14 +1,8 @@
+
+
 class SuperVGA {
     static currentVGA;
     pause;
-
-    //text layer
-    textLayer;
-    textLayerContext;
-    fontSize;
-    textAreaSize;
-    fontHeight;
-    charGridMode;
 
     //image layer
     colorDisplayArea;
@@ -16,19 +10,27 @@ class SuperVGA {
     pixelSizeX;
     pixelSizeY;
 
+    //text layer
+    textLayer;
+    textLayerContext;
+    textAreaSize;
+    canvasTxt;
+
     //parameters
     refreshRate;
     resolution;
 
-    //output
+    //output color
     framebuffer;
     gpu;
     rasterizer;
     blank;
+    textBuffer;
 
     constructor(canvas, sizeX, sizeY) {
         SuperVGA.currentVGA = this;
         this.pause = false;
+        this.textBuffer = new Map();
 
         this.colorDisplayArea = canvas;
         this.resolution = {
@@ -36,6 +38,7 @@ class SuperVGA {
             y: HardwareSettings.resY
         }
         this.textAreaSize = {width: this.resolution.x, height: this.resolution.y};
+        this.canvasTxt = window.canvasTxt.default;
         this.refreshRate = 60;
         this.framebuffer = [[], []];
         for (let x=0; x < this.resolution.x; x++) {
@@ -65,59 +68,81 @@ class SuperVGA {
         this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
         this.colorDisplay = this.rasterizer.canvas;
         this.colorDisplayArea.appendChild(this.colorDisplay);
+        this.context = this.colorDisplay.getContext('webgl2');
 
         //create text overlay canvas
         document.getElementById("text").innerHTML =
             "<canvas id='textCanvas' width='" + sizeX + "' height='" + sizeY + "'>";
         this.textLayer = document.getElementById("textCanvas");
-        this.textLayerContext = this.textLayer.getContext('2d');
+        this.textLayerContext = this.textLayer.getContext('2d', { premultipliedAlpha: false });
         this.textLayerContext.fillStyle = "rgb(255,255,255)";
-        this.fontSize = 5;
-        this.textLayerContext.textBaseline = "top";
 
-        setInterval(function() {
-            if (this.pause) return;
+        requestAnimationFrame(this.renderLoop.bind(this));
+    }
+
+    renderLoop() {
+        if (this.pause) return;
+        setTimeout(function () {
             this.framebuffer = this.blank();
-            this.textLayerContext.clearRect(0, 0, this.textLayer.width, this.textLayer.height);
-            this.framebuffer = cpu.os.render(this.framebuffer);
+            this.framebuffer = system.render(this.framebuffer);
             this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
-            this.textLayerContext.font = this.fontSize * this.pixelSizeX + "px c64";
-            this.fontHeight = this.fontSize * this.pixelSizeY;
+            this.textLayerContext.clearRect(0, 0, this.textLayer.width, this.textLayer.height);
+            if (system !== undefined && system.activeApp !== undefined) {
+                for (let layer of this.textBuffer.get(system.activeApp)) {
+                    this.drawText(layer);
+                }
+            }
+            requestAnimationFrame(this.renderLoop.bind(this));
         }.bind(this), 1000 / this.refreshRate);
     }
 
-    RenderCharGrid(chars) {
+    drawText(layer) {
+        this.canvasTxt.font = layer.font;
+        this.canvasTxt.fontSize = layer.fontSize;
+        this.canvasTxt.align = layer.horizontalAlign;
+        this.canvasTxt.vAlign = layer.verticalAlign;
+        this.textLayerContext.fillStyle = layer.fontColor;
 
+        this.canvasTxt.drawText(this.textLayerContext, layer.text,
+            layer.posX * this.pixelSizeX,
+            layer.posY * this.pixelSizeY,
+            layer.sizeX * this.pixelSizeX,
+            layer.sizeY * this.pixelSizeY);
     }
+}
 
-    getLines(ctx, text, maxWidth) {
-        let words = text.split(" ");
-        let lines = [];
-        let currentLine = words[0];
+class TextLayer {
+    text = "New Text";
+    font = "c64";
+    fontSize = 12;
+    fontColor = "Yellow";
+    verticalAlign = "top";
+    horizontalAlign = "left";
 
-        for (let i = 1; i < words.length; i++) {
-            let word = words[i];
-            let width = ctx.measureText(currentLine + " " + word).width;
-            if (width < maxWidth) {
-                currentLine += " " + word;
-            } else {
-                lines.push(currentLine);
-                currentLine = word;
-            }
-        }
-        lines.push(currentLine);
-        return lines;
+    posX;
+    posY;
+    sizeX;
+    sizeY;
+
+
+    constructor(posX, posY, sizeX, sizeY) {
+        this.posX = posX;
+        this.posY = posY;
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
     }
 }
 
 class CPU {
     os;
     pause;
-    static deltaTime;
+    static deltaTime = 0;
+    static uptime = 0;
+    static startTime = Date.now() / 1000;
 
     constructor(os) {
         this.os = os;
-        setInterval(this.execute.bind(this));
+        setInterval(this.execute.bind(this), 0);
         this.pause = false;
     }
 
@@ -125,7 +150,12 @@ class CPU {
         if (this.pause) return;
         let preTime = Date.now();
         this.os.update();
-        CPU.deltaTime = Date.now() - preTime;
+        CPU.deltaTime = Math.abs(Date.now() - preTime);
+        CPU.uptime = (Date.now() / 1000) - CPU.startTime;
     }
+}
+
+class Storage {
+
 }
 

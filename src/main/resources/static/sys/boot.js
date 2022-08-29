@@ -5,7 +5,7 @@ class HardwareSettings {
 }
 
 const vga = new SuperVGA(document.getElementById("color"),
-    window.innerHeight * HardwareSettings.physicalScreenScale,
-    window.innerHeight * HardwareSettings.physicalScreenScale);
+    750 * HardwareSettings.physicalScreenScale,
+    750 * HardwareSettings.physicalScreenScale);
 const system = new SmileOS();
 const cpu = new CPU(system);
