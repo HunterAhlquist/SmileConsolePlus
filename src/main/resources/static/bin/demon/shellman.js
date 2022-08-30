@@ -1,5 +1,8 @@
 class ShellMan extends Demon {
-    inputEvent
+    /**
+     * @type {function}
+     */
+    inputEvent;
 
     start() {
         this.inputEvent = this.input.bind(this);

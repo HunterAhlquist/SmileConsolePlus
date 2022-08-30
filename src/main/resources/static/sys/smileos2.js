@@ -1,9 +1,27 @@
 class SmileOS {
+    /**
+     * @type {SmileOS}
+     */
     static currentOS; //singleton in js, damn that's ridiculous.
+    /**
+     * @type {string}
+     */
     version = "2.0";
+    /**
+     * @type {Map<string, Demon>}
+     */
     demons; //map <string, demon>
+    /**
+     * @type {Map<string, App>}
+     */
     apps; //map <string, app>
+    /**
+     * @type {App}
+     */
     shellApp; //app
+    /**
+     * @type {App}
+     */
     activeApp; //app
 
     constructor() {
@@ -27,20 +45,27 @@ class SmileOS {
         }
         if (this.activeApp != null) this.activeApp.update();
     }
-
+    /**
+     * The render function is where you apply any shaders to the frame buffer object
+     * @param buffer {[[number], [number]]}
+     * @return {[[number], [number]]}
+     */
     render(buffer) {
         if (this.activeApp != null) {
             let newBuffer = this.activeApp.render(buffer);
-            if (newBuffer === undefined) {
+            if (newBuffer === undefined || Util.isEmpty(newBuffer)) {
                 return buffer;
             } else {
                 return newBuffer;
             }
-
         }
         else return buffer;
     }
 
+    /**
+     *
+     * @param app {App}
+     */
     switchApp(app) {
         if (this.activeApp != null && this.activeApp.firstRun) {
             this.activeApp.sleep();
@@ -55,6 +80,10 @@ class SmileOS {
         }
     }
 
+    /**
+     *
+     * @param name {string}
+     */
     runDemon(name) {
         if (this.demons.has(name)) {
             let demon = this.demons.get(name);
@@ -65,6 +94,10 @@ class SmileOS {
         }
     }
 
+    /**
+     *
+     * @param name {string}
+     */
     stopDemon(name) {
         if (this.demons.has(name)) {
             let demon = this.demons.get(name);
@@ -80,20 +113,38 @@ class SmileOS {
  * Background process, only one instance of the process can exist
  */
 class Demon {
+    /**
+     * @type {boolean}
+     */
     active = false;
 
+    /**
+     * @interface Demon
+     */
     start() {
         console.warn("Default start, please override all methods for demons.");
     }
 
+    /**
+     * @interface Demon
+     */
     update() {
         console.warn("Default update, please override all methods for demons.");
     }
 
+    /**
+     * @interface Demon
+     */
     end() {
         console.warn("Default end, please override all methods for demons.");
     }
 
+    /**
+     * Parameters to pass, returns true if valid
+     * @param params {string[]}
+     * @return {boolean}
+     * @interface Demon
+     */
     processParam(params) {
         console.warn("Default processParam, please override all methods for demons.");
         return true;
@@ -104,10 +155,14 @@ class Demon {
  * Foreground process, only one instance of the process can exist
  */
 class App {
+    /**
+     * @type {boolean}
+     */
     firstRun = true;
 
     /**
      * Start fires on the first run of an app
+     * @interface App
      */
     start() {
         console.warn("Default start, please override all methods for apps.");
@@ -115,6 +170,7 @@ class App {
 
     /**
      * Update fires every "cpu cycle"
+     * @interface App
      */
     update() {
         console.warn("Default update, please override all methods for apps.");
@@ -122,6 +178,9 @@ class App {
 
     /**
      * The render function is where you apply any shaders to the frame buffer object
+     * @param buffer {[[number], [number]]}
+     * @return {[[number], [number]]}
+     * @interface App
      */
     render(buffer) {
         console.warn("Default render, please override all methods for apps.");
@@ -131,6 +190,7 @@ class App {
     /**
      * Function that fires when the app is switched from the active app.
      * Disable any bound input here.
+     * @interface App
      */
     sleep() {
         console.warn("Default sleep, please override all methods for apps.");
@@ -139,11 +199,18 @@ class App {
     /**
      * Function that fires when the app is returned to the active app
      * Re-enable any bound input here.
+     * @interface App
      */
     wake() {
         console.warn("Default wake, please override all methods for apps.");
     }
 
+    /**
+     * Parameters to pass, returns true if valid
+     * @param params {string[]}
+     * @return {boolean}
+     * @interface App
+     */
     processParam(params) {
         console.warn("Default processParam, please override all methods for apps.");
         return true;

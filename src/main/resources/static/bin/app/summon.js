@@ -1,3 +1,6 @@
+/**
+ * @implements App
+ */
 class Summon extends App {
     start() {
         this.firstRun = false;
@@ -11,6 +14,19 @@ class Summon extends App {
         let name = params.shift();
         system.runDemon(name);
         return true;
+    }
+
+    sleep() {
+    }
+
+    update() {
+    }
+
+    wake() {
+    }
+
+    render(buffer) {
+        return undefined;
     }
 }
 

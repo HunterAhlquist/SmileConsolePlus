@@ -1,32 +1,89 @@
 
 
 class SuperVGA {
+    /**
+     * @type {SuperVGA}
+     */
     static currentVGA;
+    /**
+     * @type {boolean}
+     */
     pause;
 
     //image layer
+    /**
+     * @type {HTMLCanvasElement}
+     */
     colorDisplayArea;
+    /**
+     * @type {HTMLCanvasElement}
+     */
     colorDisplay;
+    /**
+     * @type {WebGL2RenderingContext}
+     */
+    colorDisplayContext;
+    /**
+     * @type {number}
+     */
     pixelSizeX;
+    /**
+     * @type {number}
+     */
     pixelSizeY;
 
     //text layer
+    /**
+     * @type {HTMLCanvasElement}
+     */
     textLayer;
+    /**
+     * @type {CanvasRenderingContext2D}
+     */
     textLayerContext;
+    /**
+     * @type {{width: number, height: number}}
+     */
     textAreaSize;
-    canvasTxt;
+    //?
+    canvasTxtController;
 
     //parameters
+    /**
+     * @type {number}
+     */
     refreshRate;
+    /**
+     * @type {{x: number, y: number}}
+     */
     resolution;
 
     //output color
+    /**
+     * @type {[number[4],number[4]]}
+     */
     framebuffer;
+
     gpu;
+    /**
+     * @type {function}
+     */
     rasterizer;
+    /**
+     * @type {function}
+     */
     blank;
+    /**
+     * @type {Map<App, TextLayer[]>}
+     */
     textBuffer;
 
+    /**
+     *
+     * @param canvas {HTMLCanvasElement}
+     * @param sizeX {number}
+     * @param sizeY {number}
+     */
     constructor(canvas, sizeX, sizeY) {
         SuperVGA.currentVGA = this;
         this.pause = false;
@@ -38,7 +95,7 @@ class SuperVGA {
             y: HardwareSettings.resY
         }
         this.textAreaSize = {width: this.resolution.x, height: this.resolution.y};
-        this.canvasTxt = window.canvasTxt.default;
+        this.canvasTxtController = window.canvasTxt.default;
         this.refreshRate = 60;
         this.framebuffer = [[], []];
         for (let x=0; x < this.resolution.x; x++) {
@@ -59,16 +116,32 @@ class SuperVGA {
 
         //create rasterizer kernel
         this.rasterizer = this.gpu.createKernel(function (buffer, sizeX, sizeY) {
-            let x = Math.floor(this.thread.x / sizeX);
-            let y = Math.floor(this.thread.y / sizeY);
+            let x = Math.floor(this.thread.y / sizeX);
+            let y = Math.floor(this.thread.x / sizeY);
             this.color(buffer[x][y][0], buffer[x][y][1], buffer[x][y][2], buffer[x][y][3]);
         }).setOutput([sizeX, sizeY]).setGraphical(true);
 
+        //define mix functions
+        this.gpu.addFunction(
+            /**
+             * Mix two colors together
+             * @param fg {[number]} foreground color
+             * @param bg {[number]} background color
+             * @return {[number]} final color
+             */
+            function alphaBlend(fg, bg) {
+                return [(bg[0] * (1-fg[3])) + (fg[0] * fg[3]),
+                    (bg[1] * (1-fg[3])) + (fg[1] * fg[3]),
+                    (bg[2] * (1-fg[3])) + (fg[2] * fg[3]),
+                    bg[3] + fg[3]];
+        });
+
         //create image canvas
         this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
+        //noinspection JSUnresolvedVariable
         this.colorDisplay = this.rasterizer.canvas;
         this.colorDisplayArea.appendChild(this.colorDisplay);
-        this.context = this.colorDisplay.getContext('webgl2');
+        this.colorDisplayContext = this.colorDisplay.getContext('webgl2');
 
         //create text overlay canvas
         document.getElementById("text").innerHTML =
@@ -81,29 +154,35 @@ class SuperVGA {
     }
 
     renderLoop() {
-        if (this.pause) return;
         setTimeout(function () {
-            this.framebuffer = this.blank();
-            this.framebuffer = system.render(this.framebuffer);
-            this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
-            this.textLayerContext.clearRect(0, 0, this.textLayer.width, this.textLayer.height);
-            if (system !== undefined && system.activeApp !== undefined) {
-                for (let layer of this.textBuffer.get(system.activeApp)) {
-                    this.drawText(layer);
+            if (!this.pause) {
+                this.framebuffer = this.blank();
+                this.framebuffer = system.render(this.framebuffer);
+                this.rasterizer(this.framebuffer, this.pixelSizeX, this.pixelSizeY);
+                this.textLayerContext.clearRect(0, 0, this.textLayer.width, this.textLayer.height);
+                if (system !== undefined && system.activeApp !== undefined &&
+                    this.textBuffer.has(system.activeApp)) {
+                    for (let layer of this.textBuffer.get(system.activeApp)) {
+                        this.drawText(layer);
+                    }
                 }
             }
             requestAnimationFrame(this.renderLoop.bind(this));
         }.bind(this), 1000 / this.refreshRate);
     }
 
+    /**
+     * Draw a text layer
+     * @param layer {TextLayer}
+     */
     drawText(layer) {
-        this.canvasTxt.font = layer.font;
-        this.canvasTxt.fontSize = layer.fontSize;
-        this.canvasTxt.align = layer.horizontalAlign;
-        this.canvasTxt.vAlign = layer.verticalAlign;
+        this.canvasTxtController.font = layer.font;
+        this.canvasTxtController.fontSize = layer.fontSize;
+        this.canvasTxtController.align = layer.horizontalAlign;
+        this.canvasTxtController.vAlign = layer.verticalAlign;
         this.textLayerContext.fillStyle = layer.fontColor;
 
-        this.canvasTxt.drawText(this.textLayerContext, layer.text,
+        this.canvasTxtController.drawText(this.textLayerContext, layer.text,
             layer.posX * this.pixelSizeX,
             layer.posY * this.pixelSizeY,
             layer.sizeX * this.pixelSizeX,
@@ -112,16 +191,46 @@ class SuperVGA {
 }
 
 class TextLayer {
+    /**
+     * @type {string}
+     */
     text = "New Text";
+    /**
+     * @type {string}
+     */
     font = "c64";
+    /**
+     * @type {number}
+     */
     fontSize = 12;
+    /**
+     * @type {string}
+     */
     fontColor = "Yellow";
+    /**
+     * @type {string}
+     */
     verticalAlign = "top";
+    /**
+     * @type {string}
+     */
     horizontalAlign = "left";
 
+    /**
+     * @type {number}
+     */
     posX;
+    /**
+     * @type {number}
+     */
     posY;
+    /**
+     * @type {number}
+     */
     sizeX;
+    /**
+     * @type {number}
+     */
     sizeY;
 
 
@@ -134,10 +243,25 @@ class TextLayer {
 }
 
 class CPU {
+    /**
+     * @type {SmileOS}
+     */
     os;
+    /**
+     * @type {boolean}
+     */
     pause;
+    /**
+     * @type {number}
+     */
     static deltaTime = 0;
+    /**
+     * @type {number}
+     */
     static uptime = 0;
+    /**
+     * @type {number}
+     */
     static startTime = Date.now() / 1000;
 
     constructor(os) {
@@ -153,9 +277,5 @@ class CPU {
         CPU.deltaTime = Math.abs(Date.now() - preTime);
         CPU.uptime = (Date.now() / 1000) - CPU.startTime;
     }
-}
-
-class Storage {
-
 }
 
