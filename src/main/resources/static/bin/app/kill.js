@@ -1,6 +1,3 @@
-/**
- * @implements App
- */
 class Kill extends App {
     start() {
         this.firstRun = false;
@@ -14,19 +11,6 @@ class Kill extends App {
         let name = params.shift();
         system.stopDemon(name);
         return true;
-    }
-
-    render(buffer) {
-        return buffer;
-    }
-
-    sleep() {
-    }
-
-    update() {
-    }
-
-    wake() {
     }
 }
 

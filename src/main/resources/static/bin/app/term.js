@@ -1,32 +1,11 @@
 class Term extends App {
-    /**
-     * @type {number}
-     */
     borderSize = 4;
-    /**
-     * @type {number}
-     */
     indent = 3;
-    /**
-     * @type {TextLayer}
-     */
     consoleRect;
-    /**
-     * @type {TextLayer}
-     */
     inputRect;
-    /**
-     * @type {string}
-     */
     inputBuffer = "";
-    /**
-     * @type {number}
-     */
     charLimit = 25;
 
-    /**
-     * @type {function}
-     */
     inputEvent;
 
     /**

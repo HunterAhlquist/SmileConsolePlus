@@ -1,9 +1,4 @@
-/**
- * @implements App
- */
 class Netconf extends App {
-    firstRun
-
     /**
      * Start fires on the first run of an app
      */
@@ -22,8 +17,7 @@ class Netconf extends App {
      * The render function is where you apply any shaders to the frame buffer object
      */
     render(buffer) {
-        let newBuffer = GFX.noiseShader();
-        return GFX.drawRect(newBuffer, 2, [1,1,1,0.5], [1,0,0,0.25], 64, 120, 40, 20);
+        return GFX.noiseShader();
     }
 
     /**
@@ -40,10 +34,6 @@ class Netconf extends App {
      */
     wake() {
 
-    }
-
-    processParam(params) {
-        return true;
     }
 }
 
